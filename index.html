@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tĩnh Nguyện · 15 Phút</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #fdf8f2;
+    --bg2: #f5ede0;
+    --ink: #2c2218;
+    --ink2: #7a6450;
+    --ink3: #b09a82;
+    --gold: #c8843a;
+    --gold-soft: #e8c99a;
+    --line: #e2d5c4;
+    --white: #fffdf9;
+    --step-teal: #4a8c75;
+    --step-purple: #7b6bad;
+    --step-blue: #4a7fa8;
+    --step-amber: #c8843a;
+    --r: 12px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 16px 60px;
+  }
+
+  /* ── Grain texture overlay ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: .5;
+  }
+
+  .wrap { width: 100%; max-width: 560px; position: relative; z-index: 1; }
+
+  /* ── Header ── */
+  header {
+    text-align: center;
+    padding: 52px 0 36px;
+  }
+  .logo {
+    width: 40px; height: 40px;
+    margin: 0 auto 20px;
+    position: relative;
+  }
+  .logo svg { width: 100%; height: 100%; }
+
+  header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.6rem;
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+  header p {
+    margin-top: 10px;
+    font-size: 0.88rem;
+    color: var(--ink3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ── Progress bar ── */
+  .progress-track {
+    display: flex; gap: 6px;
+    margin-bottom: 32px;
+  }
+  .progress-track span {
+    flex: 1; height: 3px;
+    background: var(--line);
+    border-radius: 2px;
+    transition: background 0.4s ease;
+  }
+  .progress-track span.done { background: var(--gold); }
+  .progress-track span.active { background: var(--gold-soft); }
+
+  /* ── Step card ── */
+  .step-card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 32px 32px 28px;
+    margin-bottom: 16px;
+    display: none;
+    animation: fadeUp 0.4s ease both;
+  }
+  .step-card.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .step-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 16px;
+  }
+
+  .step-label {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .step-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+  .step-title-group {}
+  .step-num {
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 3px;
+  }
+  .step-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+
+  /* ── Timer ── */
+  .timer-wrap {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .timer-display {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    font-weight: 300;
+    color: var(--ink2);
+    line-height: 1;
+    letter-spacing: 0.02em;
+  }
+  .timer-display.running { color: var(--gold); }
+  .timer-display.done { color: var(--step-teal); }
+
+  .timer-bar-track {
+    width: 80px;
+    height: 2px;
+    background: var(--line);
+    border-radius: 2px;
+    margin: 6px 0 8px auto;
+    overflow: hidden;
+  }
+  .timer-bar-fill {
+    height: 100%;
+    background: var(--gold);
+    border-radius: 2px;
+    transition: width 1s linear;
+  }
+
+  .timer-btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .timer-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* ── Guiding questions ── */
+  .questions {
+    margin: 0 0 20px 22px;
+  }
+  .questions p {
+    font-size: 0.9rem;
+    color: var(--ink2);
+    line-height: 1.7;
+    margin-bottom: 8px;
+    padding-left: 14px;
+    border-left: 2px solid var(--line);
+    transition: border-color 0.2s;
+  }
+  .questions p:hover { border-color: var(--gold-soft); }
+  .questions p em {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--ink);
+  }
+
+  /* ── Scripture box ── */
+  .scripture-box {
+    background: var(--bg2);
+    border-radius: var(--r);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    border-left: 3px solid var(--gold-soft);
+  }
+  .scripture-box input {
+    width: 100%;
+    background: none;
+    border: none;
+    outline: none;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.05rem;
+    font-style: italic;
+    color: var(--ink);
+    line-height: 1.6;
+  }
+  .scripture-box input::placeholder { color: var(--ink3); }
+  .scripture-ref {
+    font-size: 0.75rem;
+    color: var(--ink3);
+    letter-spacing: 0.06em;
+    margin-top: 6px;
+  }
+  .scripture-ref input {
+    background: none; border: none; outline: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    color: var(--ink3);
+    letter-spacing: 0.06em;
+    width: 120px;
+  }
+  .scripture-ref input::placeholder { color: var(--line); }
+
+  /* ── Journal textarea ── */
+  .journal-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 8px;
+  }
+  textarea {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    padding: 14px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 300;
+    color: var(--ink);
+    line-height: 1.7;
+    resize: none;
+    outline: none;
+    min-height: 90px;
+    transition: border-color 0.2s;
+  }
+  textarea:focus { border-color: var(--gold-soft); }
+  textarea::placeholder { color: var(--ink3); }
+
+  /* ── Intention input ── */
+  .intention-wrap {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg2);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    padding: 12px 16px;
+    margin-top: 8px;
+    transition: border-color 0.2s;
+  }
+  .intention-wrap:focus-within { border-color: var(--gold-soft); }
+  .intention-prefix {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: var(--ink3);
+    font-size: 0.95rem;
+    white-space: nowrap;
+  }
+  .intention-wrap input {
+    flex: 1; background: none; border: none; outline: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 300;
+    color: var(--ink);
+  }
+  .intention-wrap input::placeholder { color: var(--ink3); }
+
+  /* ── Navigation ── */
+  .nav-row {
+    display: flex; gap: 10px; margin-top: 4px;
+  }
+  .btn-back, .btn-next {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    border-radius: 40px;
+    padding: 10px 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+  }
+  .btn-back {
+    background: none;
+    color: var(--ink3);
+    border: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+  .btn-back:hover { border-color: var(--ink3); color: var(--ink2); }
+  .btn-next {
+    flex: 1;
+    background: var(--gold);
+    color: var(--white);
+    font-weight: 400;
+  }
+  .btn-next:hover { background: #b5762e; transform: translateY(-1px); }
+  .btn-next:disabled { background: var(--line); color: var(--ink3); transform: none; cursor: default; }
+
+  /* ── Completion screen ── */
+  #done-screen {
+    display: none;
+    text-align: center;
+    padding: 40px 0 20px;
+    animation: fadeUp 0.5s ease both;
+  }
+  #done-screen.active { display: block; }
+
+  .done-icon {
+    width: 64px; height: 64px;
+    background: var(--bg2);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 28px;
+  }
+  #done-screen h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    font-weight: 300;
+    margin-bottom: 10px;
+  }
+  #done-screen p {
+    color: var(--ink2);
+    font-size: 0.88rem;
+    line-height: 1.7;
+    margin-bottom: 24px;
+  }
+
+  .summary-card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 24px;
+    text-align: left;
+    margin-bottom: 20px;
+  }
+  .summary-card h3 {
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 14px;
+  }
+  .summary-item {
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .summary-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .summary-item-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .summary-item-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .summary-item-text {
+    font-size: 0.88rem;
+    color: var(--ink);
+    line-height: 1.6;
+  }
+
+  .btn-restart {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    border: 1px solid var(--line);
+    background: none;
+    color: var(--ink2);
+    border-radius: 40px;
+    padding: 10px 28px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-right: 8px;
+  }
+  .btn-restart:hover { border-color: var(--ink2); }
+
+  .btn-save {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    background: var(--gold);
+    color: var(--white);
+    border: none;
+    border-radius: 40px;
+    padding: 10px 28px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-save:hover { background: #b5762e; }
+
+  /* ── History ── */
+  .history-toggle {
+    text-align: center;
+    margin-top: 32px;
+    margin-bottom: 8px;
+  }
+  .history-toggle button {
+    background: none; border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .history-toggle button:hover { color: var(--ink2); }
+
+  #history-list { display: none; }
+  #history-list.open { display: block; }
+
+  .history-entry {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+  }
+  .history-date {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 8px;
+  }
+  .history-intention {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .history-notes {
+    font-size: 0.82rem;
+    color: var(--ink2);
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+
+  /* ── Date display ── */
+  .date-chip {
+    font-size: 0.75rem;
+    color: var(--ink3);
+    letter-spacing: 0.06em;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  /* ── Streak ── */
+  .streak-row {
+    display: flex; justify-content: center;
+    gap: 6px; margin-bottom: 28px;
+  }
+  .streak-day {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--line);
+  }
+  .streak-day.done { background: var(--gold); }
+  .streak-day.today { background: var(--gold); box-shadow: 0 0 0 2px var(--gold-soft); }
+
+  @media (max-width: 440px) {
+    .step-card { padding: 24px 20px 20px; }
+    header h1 { font-size: 2rem; }
+    .timer-display { font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="20" r="19" stroke="#e2d5c4" stroke-width="1"/>
+        <path d="M20 8 C20 8 20 16 20 20" stroke="#c8843a" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M20 20 C14 14 10 18 12 24 C14 30 20 32 20 32" stroke="#c8843a" stroke-width="1" stroke-linecap="round" fill="none"/>
+        <path d="M20 20 C26 14 30 18 28 24 C26 30 20 32 20 32" stroke="#b09a82" stroke-width="1" stroke-linecap="round" fill="none"/>
+        <circle cx="20" cy="20" r="2" fill="#c8843a"/>
+      </svg>
+    </div>
+    <h1>Tĩnh Nguyện</h1>
+    <p>15 phút · Mỗi ngày</p>
+  </header>
+
+  <div class="date-chip" id="date-display"></div>
+
+  <div class="streak-row" id="streak-row"></div>
+
+  <!-- Steps container -->
+  <div id="steps-container">
+    <div class="progress-track" id="progress-track">
+      <span id="p0"></span>
+      <span id="p1"></span>
+      <span id="p2"></span>
+      <span id="p3"></span>
+    </div>
+
+    <!-- Step 1: Dừng lại -->
+    <div class="step-card active" id="step-0" data-duration="120" data-color="#4a8c75">
+      <div class="step-header">
+        <div class="step-label">
+          <div class="step-dot" style="background:#4a8c75"></div>
+          <div class="step-title-group">
+            <div class="step-num">Bước 1 của 4</div>
+            <div class="step-title">Dừng lại &amp;<br>chuẩn bị</div>
+          </div>
+        </div>
+        <div class="timer-wrap" id="tw-0">
+          <div class="timer-display" id="td-0">2:00</div>
+          <div class="timer-bar-track"><div class="timer-bar-fill" id="tb-0" style="width:100%"></div></div>
+          <button class="timer-btn" onclick="toggleTimer(0)">Bắt đầu</button>
+        </div>
+      </div>
+      <div class="questions">
+        <p><em>Đặt điện thoại xuống,</em> tắt thông báo.</p>
+        <p>Ngồi yên. Hít vào chậm — đếm 4. Thở ra — đếm 6.</p>
+        <p>Lặp lại 3 lần. Để tâm trí về đây.</p>
+      </div>
+      <div class="journal-label">Ghi chú (tuỳ chọn)</div>
+      <textarea id="note-0" placeholder="Tôi đang mang theo gì vào lúc này…" rows="3"></textarea>
+      <div class="nav-row" style="margin-top:16px">
+        <button class="btn-next" onclick="goNext(0)">Tiếp theo →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Lượng giá -->
+    <div class="step-card" id="step-1" data-duration="300" data-color="#7b6bad">
+      <div class="step-header">
+        <div class="step-label">
+          <div class="step-dot" style="background:#7b6bad"></div>
+          <div class="step-title-group">
+            <div class="step-num">Bước 2 của 4</div>
+            <div class="step-title">Lượng giá</div>
+          </div>
+        </div>
+        <div class="timer-wrap" id="tw-1">
+          <div class="timer-display" id="td-1">5:00</div>
+          <div class="timer-bar-track"><div class="timer-bar-fill" id="tb-1" style="width:100%"></div></div>
+          <button class="timer-btn" onclick="toggleTimer(1)">Bắt đầu</button>
+        </div>
+      </div>
+      <div class="questions">
+        <p>Ngày hôm nay đã diễn ra thế nào?</p>
+        <p>Khoảnh khắc nào <em>tôi cảm thấy sống động</em> nhất?</p>
+        <p>Khoảnh khắc nào <em>nặng nề</em> hoặc thiếu yêu thương?</p>
+        <p>Ơn nào Chúa đã ban mà tôi chưa để ý?</p>
+        <p>Điều gì cần <em>tha thứ hoặc buông bỏ?</em></p>
+      </div>
+      <div class="journal-label">Nhìn lại hôm nay</div>
+      <textarea id="note-1" placeholder="Điều đáng ghi nhớ từ hôm nay là…" rows="4"></textarea>
+      <div class="nav-row" style="margin-top:16px">
+        <button class="btn-back" onclick="goBack(1)">←</button>
+        <button class="btn-next" onclick="goNext(1)">Tiếp theo →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Tĩnh nguyện -->
+    <div class="step-card" id="step-2" data-duration="300" data-color="#4a7fa8">
+      <div class="step-header">
+        <div class="step-label">
+          <div class="step-dot" style="background:#4a7fa8"></div>
+          <div class="step-title-group">
+            <div class="step-num">Bước 3 của 4</div>
+            <div class="step-title">Tĩnh nguyện</div>
+          </div>
+        </div>
+        <div class="timer-wrap" id="tw-2">
+          <div class="timer-display" id="td-2">5:00</div>
+          <div class="timer-bar-track"><div class="timer-bar-fill" id="tb-2" style="width:100%"></div></div>
+          <button class="timer-btn" onclick="toggleTimer(2)">Bắt đầu</button>
+        </div>
+      </div>
+      <div class="scripture-box">
+        <input type="text" id="scripture-text" placeholder="Câu Kinh Thánh hôm nay…">
+        <div class="scripture-ref">— <input type="text" id="scripture-ref" placeholder="Sách chương:câu"></div>
+      </div>
+      <div class="questions">
+        <p>Đọc chậm, đọc lại. <em>Từ nào chạm đến bạn?</em></p>
+        <p>Ngồi yên lặng 1–2 phút. Lắng nghe.</p>
+        <p>Dâng lên Chúa điều đang nặng lòng nhất.</p>
+        <p>Cầu xin điều bạn thực sự cần hôm nay.</p>
+      </div>
+      <div class="journal-label">Lời cầu nguyện</div>
+      <textarea id="note-2" placeholder="Chúa ơi, con muốn nói với Ngài rằng…" rows="4"></textarea>
+      <div class="nav-row" style="margin-top:16px">
+        <button class="btn-back" onclick="goBack(2)">←</button>
+        <button class="btn-next" onclick="goNext(2)">Tiếp theo →</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Ý định -->
+    <div class="step-card" id="step-3" data-duration="180" data-color="#c8843a">
+      <div class="step-header">
+        <div class="step-label">
+          <div class="step-dot" style="background:#c8843a"></div>
+          <div class="step-title-group">
+            <div class="step-num">Bước 4 của 4</div>
+            <div class="step-title">Ý định<br>cho ngày mai</div>
+          </div>
+        </div>
+        <div class="timer-wrap" id="tw-3">
+          <div class="timer-display" id="td-3">3:00</div>
+          <div class="timer-bar-track"><div class="timer-bar-fill" id="tb-3" style="width:100%"></div></div>
+          <button class="timer-btn" onclick="toggleTimer(3)">Bắt đầu</button>
+        </div>
+      </div>
+      <div class="questions">
+        <p>Chọn <em>một điều cụ thể, nhỏ và khả thi.</em></p>
+        <p>Không phải danh sách — chỉ một điều thôi.</p>
+        <p>Hãy hình dung mình làm điều đó vào thời điểm nào.</p>
+      </div>
+      <div class="journal-label">Ý định của tôi</div>
+      <div class="intention-wrap">
+        <span class="intention-prefix">Ngày mai tôi sẽ</span>
+        <input type="text" id="intention" placeholder="…">
+      </div>
+      <div class="journal-label" style="margin-top:16px">Ghi thêm</div>
+      <textarea id="note-3" placeholder="Điều tôi muốn nhớ…" rows="3"></textarea>
+      <div class="nav-row" style="margin-top:16px">
+        <button class="btn-back" onclick="goBack(3)">←</button>
+        <button class="btn-next" onclick="finish()">Hoàn tất ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done screen -->
+  <div id="done-screen">
+    <div class="done-icon">🕯️</div>
+    <h2>Amen.</h2>
+    <p>Bạn đã hoàn tất 15 phút tĩnh nguyện hôm nay.<br>Hãy mang sự bình an này vào phần còn lại của ngày.</p>
+
+    <div class="summary-card">
+      <h3>Tóm tắt hôm nay</h3>
+      <div id="summary-content"></div>
+    </div>
+
+    <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap">
+      <button class="btn-restart" onclick="restart()">Bắt đầu lại</button>
+      <button class="btn-save" onclick="saveEntry()">Lưu vào nhật ký</button>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="history-toggle">
+    <button onclick="toggleHistory()">Nhật ký tĩnh nguyện ↓</button>
+  </div>
+  <div id="history-list"></div>
+
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────
+let currentStep = 0;
+let timers = [null, null, null, null];
+let timeLeft = [120, 300, 300, 180];
+const totalTime = [120, 300, 300, 180];
+let timerRunning = [false, false, false, false];
+
+// ── Date ───────────────────────────────────────────────
+function formatDate(d) {
+  const days = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
+  const months = ['tháng 1','tháng 2','tháng 3','tháng 4','tháng 5','tháng 6',
+                  'tháng 7','tháng 8','tháng 9','tháng 10','tháng 11','tháng 12'];
+  return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+document.getElementById('date-display').textContent = formatDate(new Date());
+
+// ── Streak (last 7 days) ────────────────────────────────
+function renderStreak() {
+  const history = getHistory();
+  const container = document.getElementById('streak-row');
+  container.innerHTML = '';
+  const today = new Date().toDateString();
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toDateString();
+    const done = history.some(e => e.date === key);
+    const el = document.createElement('div');
+    el.className = 'streak-day' + (done ? ' done' : '') + (key === today && done ? ' today' : '');
+    el.title = key;
+    container.appendChild(el);
+  }
+}
+renderStreak();
+
+// ── Progress ───────────────────────────────────────────
+function updateProgress() {
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById('p' + i);
+    el.className = i < currentStep ? 'done' : i === currentStep ? 'active' : '';
+  }
+}
+updateProgress();
+
+// ── Navigation ─────────────────────────────────────────
+function goNext(step) {
+  stopTimer(step);
+  document.getElementById('step-' + step).classList.remove('active');
+  currentStep = step + 1;
+  document.getElementById('step-' + currentStep).classList.add('active');
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goBack(step) {
+  stopTimer(step);
+  document.getElementById('step-' + step).classList.remove('active');
+  currentStep = step - 1;
+  document.getElementById('step-' + currentStep).classList.add('active');
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function finish() {
+  stopTimer(3);
+  document.getElementById('steps-container').style.display = 'none';
+  document.getElementById('done-screen').classList.add('active');
+  renderSummary();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function restart() {
+  // Reset
+  currentStep = 0;
+  timeLeft = [120, 300, 300, 180];
+  timerRunning = [false, false, false, false];
+  // Reset UI
+  for (let i = 0; i < 4; i++) {
+    stopTimer(i);
+    document.getElementById('step-' + i).classList.remove('active');
+    const td = document.getElementById('td-' + i);
+    td.textContent = formatTime(totalTime[i]);
+    td.className = 'timer-display';
+    document.getElementById('tb-' + i).style.width = '100%';
+    const btn = document.querySelector('#step-' + i + ' .timer-btn');
+    if (btn) btn.textContent = 'Bắt đầu';
+  }
+  ['note-0','note-1','note-2','note-3','scripture-text','scripture-ref','intention'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('step-0').classList.add('active');
+  updateProgress();
+  document.getElementById('done-screen').classList.remove('active');
+  document.getElementById('steps-container').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Timer ──────────────────────────────────────────────
+function formatTime(s) {
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+function toggleTimer(step) {
+  if (timerRunning[step]) {
+    stopTimer(step);
+  } else {
+    startTimer(step);
+  }
+}
+
+function startTimer(step) {
+  if (timeLeft[step] <= 0) {
+    timeLeft[step] = totalTime[step];
+    document.getElementById('tb-' + step).style.width = '100%';
+  }
+  timerRunning[step] = true;
+  const td = document.getElementById('td-' + step);
+  td.classList.add('running');
+  td.classList.remove('done');
+  const btn = document.querySelector('#step-' + step + ' .timer-btn');
+  if (btn) btn.textContent = 'Dừng';
+
+  timers[step] = setInterval(() => {
+    timeLeft[step]--;
+    document.getElementById('td-' + step).textContent = formatTime(timeLeft[step]);
+    const pct = (timeLeft[step] / totalTime[step]) * 100;
+    document.getElementById('tb-' + step).style.width = pct + '%';
+    if (timeLeft[step] <= 0) {
+      clearInterval(timers[step]);
+      timerRunning[step] = false;
+      td.textContent = 'Xong ✓';
+      td.className = 'timer-display done';
+      if (btn) btn.textContent = 'Lại';
+      if ('vibrate' in navigator) navigator.vibrate([100, 50, 100]);
+    }
+  }, 1000);
+}
+
+function stopTimer(step) {
+  if (timers[step]) clearInterval(timers[step]);
+  timerRunning[step] = false;
+  const btn = document.querySelector('#step-' + step + ' .timer-btn');
+  if (btn && timeLeft[step] > 0) btn.textContent = 'Tiếp tục';
+  const td = document.getElementById('td-' + step);
+  if (td) td.classList.remove('running');
+}
+
+// ── Summary ────────────────────────────────────────────
+function renderSummary() {
+  const items = [
+    { label: 'Lượng giá', color: '#7b6bad', key: 'note-1' },
+    { label: 'Kinh Thánh', color: '#4a7fa8', key: 'scripture-text', ref: 'scripture-ref' },
+    { label: 'Lời cầu', color: '#4a7fa8', key: 'note-2' },
+    { label: 'Ý định', color: '#c8843a', key: 'intention', prefix: 'Ngày mai tôi sẽ ' },
+  ];
+  const container = document.getElementById('summary-content');
+  container.innerHTML = '';
+  items.forEach(item => {
+    const el = document.getElementById(item.key);
+    const val = el ? el.value.trim() : '';
+    if (!val) return;
+    const div = document.createElement('div');
+    div.className = 'summary-item';
+    const ref = item.ref ? document.getElementById(item.ref)?.value.trim() : '';
+    div.innerHTML = `<div class="summary-item-label">
+      <span class="summary-item-dot" style="background:${item.color}"></span>
+      ${item.label}${ref ? ' · ' + ref : ''}
+    </div>
+    <div class="summary-item-text">${(item.prefix || '') + val}</div>`;
+    container.appendChild(div);
+  });
+}
+
+// ── History ────────────────────────────────────────────
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('tn_history') || '[]'); } catch { return []; }
+}
+
+function saveEntry() {
+  const entry = {
+    date: new Date().toDateString(),
+    dateStr: formatDate(new Date()),
+    scripture: document.getElementById('scripture-text')?.value.trim() || '',
+    scriptureRef: document.getElementById('scripture-ref')?.value.trim() || '',
+    note1: document.getElementById('note-1')?.value.trim() || '',
+    note2: document.getElementById('note-2')?.value.trim() || '',
+    note3: document.getElementById('note-3')?.value.trim() || '',
+    intention: document.getElementById('intention')?.value.trim() || '',
+  };
+  const history = getHistory();
+  // Remove today if already exists
+  const filtered = history.filter(e => e.date !== entry.date);
+  filtered.unshift(entry);
+  // Keep last 90 days
+  localStorage.setItem('tn_history', JSON.stringify(filtered.slice(0, 90)));
+  renderStreak();
+  renderHistoryList();
+  const btn = document.querySelector('.btn-save');
+  if (btn) { btn.textContent = 'Đã lưu ✓'; setTimeout(() => btn.textContent = 'Lưu vào nhật ký', 2000); }
+}
+
+function toggleHistory() {
+  const list = document.getElementById('history-list');
+  list.classList.toggle('open');
+  renderHistoryList();
+  const btn = document.querySelector('.history-toggle button');
+  if (list.classList.contains('open')) {
+    btn.textContent = 'Nhật ký tĩnh nguyện ↑';
+  } else {
+    btn.textContent = 'Nhật ký tĩnh nguyện ↓';
+  }
+}
+
+function renderHistoryList() {
+  const list = document.getElementById('history-list');
+  if (!list.classList.contains('open')) return;
+  const history = getHistory();
+  if (!history.length) {
+    list.innerHTML = '<p style="text-align:center;color:var(--ink3);font-size:0.85rem;padding:20px 0">Chưa có nhật ký nào. Hoàn tất buổi tĩnh nguyện để lưu.</p>';
+    return;
+  }
+  list.innerHTML = history.slice(0, 30).map(e => `
+    <div class="history-entry">
+      <div class="history-date">${e.dateStr || e.date}</div>
+      ${e.intention ? `<div class="history-intention">Ngày mai tôi sẽ ${e.intention}</div>` : ''}
+      ${e.scripture ? `<div class="history-notes" style="font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--ink2);">"${e.scripture}"${e.scriptureRef ? ' — ' + e.scriptureRef : ''}</div>` : ''}
+      ${e.note1 ? `<div class="history-notes" style="margin-top:6px">${e.note1.substring(0, 140)}${e.note1.length > 140 ? '…' : ''}</div>` : ''}
+    </div>
+  `).join('');
+}
+</script>
+</body>
+</html>
